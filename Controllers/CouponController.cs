@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WalletManagement2.Models;
 using WalletManagement2.RequestModel;
 
 namespace WalletManagement2.Controllers;
 
+[Authorize(Roles = "admin,user")]
 [Route("api/[controller]")]
 [ApiController]
 public class CouponController : ControllerBase

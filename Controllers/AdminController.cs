@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WalletManagement2.CustomException;
 
 namespace WalletManagement2.Controllers;
 
+[Authorize(Roles = "admin")]
 [Route("api/[controller]")]
 [ApiController]
 public class AdminController : ControllerBase
@@ -18,7 +21,7 @@ public class AdminController : ControllerBase
     {
         var result = _walletContext.Users.Include(x=>x.Wallet);
         if (!await result.AnyAsync())
-            throw new Exception("No Users Yet!!");
+            throw new NotFoundException("No Users Yet!!");
         return Ok(result.ToList());
     }
 
@@ -27,7 +30,7 @@ public class AdminController : ControllerBase
     {
         var result = _walletContext.Users.Where(x => x.IsActive).Include(x=>x.Wallet);
         if (!await result.AnyAsync())
-            throw new Exception("No Users Yet!!");
+            throw new NotFoundException("No Users Yet!!");
         return Ok(result.ToList());
     }
 
@@ -36,7 +39,7 @@ public class AdminController : ControllerBase
     {
         var result = _walletContext.Users.Where(x => x.UserId == userId && x.IsActive).Include(x => x.Wallet);
         if (!await result.AnyAsync())
-            throw new Exception("User Not Found!!");
+            throw new NotFoundException("User Not Found!!");
         return Ok(result.ToList());
     }
 
@@ -45,7 +48,7 @@ public class AdminController : ControllerBase
     {
         var result = _walletContext.Wallets;
         if (!await result.AnyAsync())
-            throw new Exception("Wallets Not Found!!");
+            throw new NotFoundException("Wallets Not Found!!");
         return Ok(result.ToList());
     }
 
@@ -54,7 +57,7 @@ public class AdminController : ControllerBase
     {
         var result = _walletContext.Wallets.Where(x => x.WalletId == walletId);
         if (!await result.AnyAsync())
-            throw new Exception("Wallet Not Created!!");
+            throw new NotFoundException("Wallet Not Created!!");
         return Ok(result.ToList());
     }
 
@@ -73,7 +76,7 @@ public class AdminController : ControllerBase
                                                     Status = transactionWallet.Status,
                                                 });
         if (!await result.AnyAsync())
-            throw new Exception("No Transactions Found !!");
+            throw new NotFoundException("No Transactions Found !!");
         return Ok(result.ToList());
     }
 
@@ -93,7 +96,7 @@ public class AdminController : ControllerBase
                                                 })
                                                 .Where(x => x.WalletId == walletId);
         if (!await result.AnyAsync())
-            throw new Exception("No Transactions Found !!");
+            throw new NotFoundException("No Transactions Found !!");
         return Ok(result.ToList());
     }
 
@@ -113,7 +116,7 @@ public class AdminController : ControllerBase
                                                 })
                                                 .Where(x => x.TransactionId == transactionId);
         if (!await result.AnyAsync())
-            throw new Exception("No Transactions Found !!");
+            throw new NotFoundException("No Transactions Found !!");
         return Ok(result.ToList());
     }
 
@@ -122,7 +125,7 @@ public class AdminController : ControllerBase
     {
         var result = _walletContext.Coupons;
         if (!await result.AnyAsync())
-            throw new Exception("Coupons Not Available!!");
+            throw new NotFoundException("Coupons Not Available!!");
         return Ok(result.ToList());
     }
 
@@ -131,7 +134,7 @@ public class AdminController : ControllerBase
     {
         var result = _walletContext.Coupons.Where(x => x.CouponCode == couponCode && x.IsActive);
         if (!await result.AnyAsync())
-            throw new Exception("Coupon Not Available!!");
+            throw new NotFoundException("Coupon Not Available!!");
         return Ok(result.ToList());
     }
 }

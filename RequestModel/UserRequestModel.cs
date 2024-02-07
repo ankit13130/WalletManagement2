@@ -16,7 +16,7 @@ public record UserRequestModel
     [RegularExpression(@"^\d{10}$", ErrorMessage = "Invalid Mobile Number.(hint:8874521478)")]
     public string MobileNumber { get; set; }
 
-    [RegularExpression(@"^(?=.*[A-Z]{5})(?=.*\d{4})(?=.*[A-Z])$", ErrorMessage = "Invalid PAN Number.(hint:WASDE1234W)")]
+    //[RegularExpression(@"^(?=.*[A-Z]{5})(?=.*\d{4})(?=.*[A-Z].{10})$", ErrorMessage = "Invalid PAN Number.(hint:WASDE1234W)")]
     public string PANNumber { get; set; }
     
     [RegularExpression(@"^\d{12}$", ErrorMessage = "Invalid Adhar Number.(hint:887452147878)")]

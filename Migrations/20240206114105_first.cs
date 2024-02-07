@@ -31,7 +31,7 @@ namespace WalletManagement2.Migrations
                 columns: table => new
                 {
                     TransactionId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "2000, 1"),
+                        .Annotation("SqlServer:Identity", "3000, 1"),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     TransactionDateTime = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -90,6 +90,8 @@ namespace WalletManagement2.Migrations
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Username = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Hash = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Salt = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     MobileNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PANNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -114,7 +116,7 @@ namespace WalletManagement2.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "3000, 1"),
+                        .Annotation("SqlServer:Identity", "2000, 1"),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
                     CouponId = table.Column<long>(type: "bigint", nullable: false)
                 },

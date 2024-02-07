@@ -115,6 +115,10 @@ namespace WalletManagement2.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -131,6 +135,10 @@ namespace WalletManagement2.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Salt")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

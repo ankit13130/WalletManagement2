@@ -1,19 +1,25 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using WalletManagement2.CustomException;
 using WalletManagement2.Models;
 using WalletManagement2.RequestModel;
 
 namespace WalletManagement2.Controllers;
 
+[Authorize(Roles ="admin,user")]
 [Route("api/[controller]")]
 [ApiController]
 public class UserController : ControllerBase
 {
     private readonly WalletContext _walletContext;
-    public UserController(WalletContext walletContext)
+    private readonly IMapper _mapper;
+    public UserController(WalletContext walletContext, IMapper mapper)
     {
         _walletContext = walletContext;
+        _mapper = mapper;
     }
 
     [HttpPost("addMoney")]
@@ -24,26 +30,25 @@ public class UserController : ControllerBase
         decimal CashBackAmount = 0;
 
         if (!data.Any())
-            throw new Exception("User Not Exist...");
+            throw new NotFoundException("User Not Exist...");
         if (money < 1)
-            throw new Exception("Add Money Greater Than 0");
+            throw new ValidationException("Add Money Greater Than 0");
 
         if (!couponCode.IsNullOrEmpty())
         {
             if (!validCoupon.Any())
-                throw new Exception("Invalid Coupon!!");
+                throw new ValidationException("Invalid Coupon!!");
 
             var validUser = _walletContext.UserCoupons.Where(x => x.User.UserId == userId && x.Coupon.CouponId == validCoupon.FirstOrDefault().CouponId);
 
             if (validUser.Any())
-                throw new Exception("You Already Used This Coupon...");
+                throw new ValidationException("You Already Used This Coupon...");
 
-            CashBackAmount = (money*validCoupon.FirstOrDefault().CashBack)/100;
+            CashBackAmount = money * validCoupon.FirstOrDefault().CashBack / 100;
         }
 
         Wallet wallet;
         Transaction transaction;
-        TransactionWallet transactionWallet;
         if (data.Any(x => x.Wallet == null))
         {
             wallet = new Wallet();
@@ -59,7 +64,7 @@ public class UserController : ControllerBase
             transaction = Transaction(money);
             TransactionWallet(wallet,"Credited",transaction);
 
-            await _walletContext.SaveChangesAsync();
+            
         }
         else
         {
@@ -74,6 +79,7 @@ public class UserController : ControllerBase
 
         if(!(CashBackAmount == 0))
         {
+            await _walletContext.SaveChangesAsync();
             wallet = data.Select(s => s.Wallet).FirstOrDefault();
             wallet.Balance += CashBackAmount;
             _walletContext.Wallets.Update(wallet);
@@ -87,9 +93,8 @@ public class UserController : ControllerBase
             userCoupon.Coupon = validCoupon.FirstOrDefault();
             _walletContext.UserCoupons.Add(userCoupon);
         }
-
-        var result = await _walletContext.SaveChangesAsync();
-        if (!(result > 0))
+        var result = _walletContext.SaveChanges();
+        if (result == 0)
             throw new Exception("Money Not Added");
         return Ok($"₹{money} Added Successfully with TransactionId: {transaction.TransactionId}");
     }
@@ -104,26 +109,26 @@ public class UserController : ControllerBase
         decimal CashBackAmount = 0;
 
         if (!data.Any(z=>z.Wallet.WalletId == senderWalletId))
-            throw new Exception("Invalid Sender WalletId...");
+            throw new NotFoundException("Invalid Sender WalletId...");
 
         if (!data.Any(z => z.Wallet.WalletId == receiverWalletId))
-            throw new Exception("Invalid Receiver WalletId...");
+            throw new NotFoundException("Invalid Receiver WalletId...");
 
         if (amount < 1)
-            throw new Exception("Send Money greater than 0");
+            throw new ValidationException("Send Money greater than 0");
 
         if(data.Any(x=>x.Wallet.Balance<amount))
-            throw new Exception("Not Sufficient Balance");
+            throw new ValidationException("Not Sufficient Balance");
         
         if (!couponCode.IsNullOrEmpty())
         {
             if (!validCoupon.Any())
-                throw new Exception("Invalid Coupon!!");
+                throw new ValidationException("Invalid Coupon!!");
 
             var validUser = _walletContext.UserCoupons.Where(x => x.User.UserId == data.Where(x=>x.Wallet.WalletId == senderWalletId).Select(x=>x.UserId).FirstOrDefault() && x.Coupon.CouponId == validCoupon.FirstOrDefault().CouponId);
 
             if (validUser.Any())
-                throw new Exception("You Already Used This Coupon...");
+                throw new ValidationException("You Already Used This Coupon...");
 
             CashBackAmount = (amount * validCoupon.FirstOrDefault().CashBack) / 100;
         }
@@ -178,7 +183,7 @@ public class UserController : ControllerBase
                                                 })
                                                 .Where(x => x.WalletId == walletId);
         if (!await result.AnyAsync())
-            throw new Exception("No Transactions Found !!");
+            throw new NotFoundException("No Transactions Found !!");
         return Ok(result.ToList());
     }
 
@@ -187,17 +192,9 @@ public class UserController : ControllerBase
     {
         var data = _walletContext.Users.Where(c => c.UserId == userId);
         if (!await data.AnyAsync(c => c.IsActive))
-            throw new Exception("User Not Found");
+            throw new NotFoundException("User Not Found");
 
         User user = _mapper.Map<User>(userRequestModel);
-        user.FullName = userRequestModel.FullName;
-        user.Username = userRequestModel.Username;
-        user.Password = userRequestModel.Password;
-        user.Email = userRequestModel.Email;
-        user.MobileNumber = userRequestModel.MobileNumber;
-        user.PANNumber = userRequestModel.PANNumber;
-        user.AdharNumber = userRequestModel.AdharNumber;
-        user.Gender = userRequestModel.Gender;
         _walletContext.Users.Update(user);
 
         var result = await _walletContext.SaveChangesAsync();
@@ -211,7 +208,7 @@ public class UserController : ControllerBase
     {
         var data = _walletContext.Users.Where(c => c.UserId == userId);
         if (!await data.AnyAsync(c => c.IsActive))
-            throw new Exception("User Not Found");
+            throw new NotFoundException("User Not Found");
 
         User user = data.FirstOrDefault();
         user.IsActive = false;
@@ -233,6 +230,7 @@ public class UserController : ControllerBase
     }
     private void TransactionWallet(Wallet wallet, string status, Transaction transaction)
     {
+        //TransactionWallet transactionWallet = _mapper.Map<TransactionWallet>(transaction);
         TransactionWallet transactionWallet = new TransactionWallet();
         transactionWallet.Status = status;
         transactionWallet.Wallet = wallet;
